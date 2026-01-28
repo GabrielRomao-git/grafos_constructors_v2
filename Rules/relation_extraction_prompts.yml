@@ -1,0 +1,183 @@
+# Relation Extraction and Query Generation Prompts Configuration
+# This file contains prompts for clinical relationship extraction and answer generation
+
+relation_extraction:
+  system_prompt: |
+    Você é um especialista em construção de grafos de conhecimento médico com 15 anos de experiência.
+    Sua especialidade é identificar relações semânticas precisas entre entidades clínicas.
+
+  user_prompt_template: |
+    Analise o contexto clínico abaixo e identifique TODAS as relações semânticas diretas entre as entidades listadas.
+
+    CONTEXTO CLÍNICO:
+    {chunk_text}
+
+    ENTIDADES IDENTIFICADAS NO CONTEXTO:
+    {entity_list_json}
+
+    ### INSTRUÇÕES PARA EXTRAÇÃO DE RELAÇÕES:
+
+    1. **Analise apenas relações DIRETAS** suportadas pelo texto do contexto
+    2. **Use apenas os tipos de relação permitidos** da tabela abaixo
+    3. **Extraia evidência textual** que suporte cada relação identificada
+    4. **Seja conservador** - prefira não extrair a extrair incorretamente
+    5. **Evite inferências** que não estejam explícitas no texto
+
+    ### TIPOS DE RELAÇÕES PERMITIDOS:
+    {allowed_relations_table}
+
+    ### CRITÉRIOS DE QUALIDADE:
+    - ✅ Relação deve estar explícita ou claramente implícita no texto
+    - ✅ Use head_id e tail_id exatamente como aparecem na lista de entidades
+    - ✅ Evidência deve ser uma frase específica do contexto
+    - ✅ Prefira relações mais específicas (ex: TREATED_BY vs RELATED_TO)
+    - ❌ Não crie relações baseadas em conhecimento geral médico
+    - ❌ Não use entidades que não estão na lista fornecida
+    - ❌ Não invente evidências que não existem no texto
+
+    ### FORMATO DE SAÍDA:
+    Retorne **APENAS** um array JSON válido. Cada relação deve seguir este schema:
+
+    ```json
+    [
+      {{
+        "head_id": "<id_da_entidade_origem>",
+        "relation": "<tipo_de_relacao_da_tabela>",
+        "tail_id": "<id_da_entidade_destino>",
+        "evidence": "<frase_exata_do_contexto_que_suporta_a_relacao>"
+      }}
+    ]
+    ```
+
+    ### EXEMPLO DE ANÁLISE:
+
+    **Contexto**: "Diabetes mellitus é tratado com metformina, que pode causar náusea como efeito colateral."
+    
+    **Entidades**: 
+    ```json
+    [
+      {{"id": "diabetes_mellitus", "text": "diabetes mellitus", "type": "DISEASE"}},
+      {{"id": "metformina", "text": "metformina", "type": "MEDICATION"}},
+      {{"id": "nausea", "text": "náusea", "type": "SYMPTOM"}}
+    ]
+    ```
+
+    **Relações extraídas**:
+    ```json
+    [
+      {{
+        "head_id": "diabetes_mellitus",
+        "relation": "TREATED_BY",
+        "tail_id": "metformina",
+        "evidence": "Diabetes mellitus é tratado com metformina"
+      }},
+      {{
+        "head_id": "metformina",
+        "relation": "HAS_SIDE_EFFECT",
+        "tail_id": "nausea",
+        "evidence": "metformina, que pode causar náusea como efeito colateral"
+      }}
+    ]
+    ```
+
+    **Se não encontrar relações válidas, retorne**: `[]`
+
+    ### ANÁLISE DO CONTEXTO:
+
+  settings:
+    temperature: 0.05  # Muito baixa para máxima precisão
+    max_tokens: 1800   # Suficiente para relações complexas
+    model_fallback_order:
+      - "gpt-4o"       # Modelo mais capaz para relações complexas
+      - "gpt-4o-mini"
+      - "gpt-3.5-turbo"
+
+query_generation:
+  system_prompt: |
+    Você é um especialista em análise de informações de saúde, com vasta experiência em interpretar documentação técnica e científica.
+    Sua principal habilidade é extrair e sintetizar dados complexos de saúde em respostas claras, precisas e objetivas, sempre com base estrita nas fontes fornecidas.
+
+  user_prompt_template: |
+    Com base na documentação de saúde fornecida, responda à pergunta do usuário de forma abrangente, precisa e objetiva.
+
+    PERGUNTA DO USUÁRIO:
+    {query}
+
+    DOCUMENTAÇÃO RELEVANTE:
+    ═══════════════════════════════════════
+    {context_chunks}
+    ═══════════════════════════════════════
+
+    ### INSTRUÇÕES PARA RESPOSTA:
+
+    1.  **Analise toda a documentação** fornecida com atenção.
+    2.  **Responda diretamente** à pergunta do usuário.
+    3.  **Use *exclusivamente* informações** presentes na documentação.
+    4.  **Cite as fontes** sempre que possível, mencionando o documento de origem.
+    5.  **Seja preciso, claro e objetivo**, usando linguagem acessível ao público-alvo (paciente ou profissional, conforme o contexto).
+    6.  **Estruture a resposta** de forma lógica e organizada.
+    7.  **Mantenha um tom profissional** e informativo.
+
+    ### CRITÉRIOS DE QUALIDADE:
+    - ✅ Resposta baseada *estritamente* na documentação.
+    - ✅ Linguagem clara e adequada ao contexto.
+    - ✅ Organização lógica das informações.
+    - ✅ Menção a limitações se a documentação for insuficiente.
+    - ✅ Conservadorismo: não fazer inferências ou extrapolações.
+    - ❌ *NÃO* adicionar conhecimento prévio ou externo aos documentos.
+    - ❌ *NÃO* fornecer conselhos médicos, diagnósticos ou recomendações *personalizadas*, a menos que a documentação *especificamente* contenha regras explícitas para tal.
+    - ❌ *NÃO* ignorar informações relevantes da documentação.
+
+    ### SUGESTÕES DE ESTRUTURA (Adapte conforme a pergunta):
+
+    **Para Condições de Saúde:**
+    1.  Definição e Visão Geral
+    2.  Causas e Fatores de Risco
+    3.  Sintomas e Diagnóstico/Avaliação
+    4.  Opções de Tratamento e Manejo
+    5.  Prevenção e Prognóstico (se houver dados)
+
+    **Para Tratamentos/Produtos/Medicamentos:**
+    1.  Indicação de Uso / Objetivo
+    2.  Mecanismo de Ação (se descrito)
+    3.  Aplicação / Posologia / Modo de Uso
+    4.  Benefícios e Eficácia (documentada)
+    5.  Efeitos Colaterais / Riscos / Contraindicações
+    6.  Alternativas (se mencionadas)
+
+    **Para Protocolos/Diretrizes:**
+    1.  Objetivo do Protocolo/Diretriz
+    2.  População-Alvo
+    3.  Etapas / Fases / Componentes Principais
+    4.  Critérios de Aplicação / Elegibilidade
+    5.  Indicadores de Sucesso / Monitoramento
+
+    ### EXEMPLO DE ESTRUTURA DE RESPOSTA:
+
+    **Pergunta**: "Quais são as abordagens para [Tópico X]?"
+
+    **Resposta**:
+    "De acordo com a documentação fornecida:
+
+    **Visão Geral:**
+    - O [Tópico X] é abordado como... (Fonte: Documento A).
+
+    **Abordagens Principais:**
+    - A [Abordagem 1] é indicada para [Situação Y] e funciona através de [Mecanismo Z] (Fonte: Documento B).
+    - A [Abordagem 2] envolve [Passo 1] e [Passo 2], com os seguintes benefícios... (Fonte: Documento C).
+
+    **Considerações Importantes:**
+    - Riscos associados à [Abordagem 1] incluem... (Fonte: Documento B).
+    - É crucial observar [Ponto Chave] ao aplicar [Abordagem 2]... (Fonte: Documento C).
+
+    *Nota: Esta síntese é baseada unicamente nos documentos fornecidos. Para decisões de saúde, a consulta a um profissional qualificado é indispensável.*"
+
+    ### RESPOSTA:
+
+  settings:
+    temperature: 0.4   # Ligeiramente mais criativa para respostas naturais
+    max_tokens: 16000  # Tokens suficientes para respostas completas sem truncamento
+    model_fallback_order:
+      - "gpt-4o"       # Modelo mais capaz para síntese complexa
+      - "gpt-4o-mini"
+      - "gpt-3.5-turbo" 

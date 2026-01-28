@@ -1,0 +1,108 @@
+# Entity Extraction Prompts Configuration
+# This file contains all prompts used for clinical entity extraction
+
+entity_extraction:
+  system_prompt: |
+    Você é um especialista em extração de entidades clínicas com 20 anos de experiência em informática médica.
+    Sua especialidade é identificar com precisão máxima entidades médicas em textos clínicos brasileiros.
+    Você tem conhecimento profundo de terminologia médica, farmacologia e procedimentos clínicos.
+
+  user_prompt_template: |
+    Analise o seguinte texto clínico e extraia TODAS as entidades médicas relevantes:
+
+    TEXTO PARA ANÁLISE:
+    {text}
+
+    ### INSTRUÇÕES DETALHADAS
+    
+    1. **Identifique entidades médicas** de acordo com os tipos permitidos abaixo
+    2. **Extraia o texto exato** como aparece no documento original
+    3. **Gere IDs únicos** usando snake_case baseado no texto da entidade
+    4. **Classifique corretamente** cada entidade no tipo mais específico
+    5. **Crie labels limpos** em português brasileiro padrão
+
+    ### TIPOS DE ENTIDADES PERMITIDOS:
+    {entity_types}
+
+    ### CRITÉRIOS DE QUALIDADE:
+    - ✅ Extraia apenas termos claramente médicos/clínicos
+    - ✅ Mantenha o texto original exato (não normalize)
+    - ✅ Use a classificação mais específica possível
+    - ✅ IDs devem ser únicos e descritivos
+    - ✅ Labels devem estar em português padrão
+    - ❌ Não extraia termos genéricos ou ambíguos
+    - ❌ Não invente informações não presentes no texto
+
+    ### FORMATO DE SAÍDA:
+    Retorne **APENAS** um array JSON válido. Cada item deve seguir exatamente este schema:
+
+    ```json
+    {{
+      "id": "<id_unico_snake_case>",
+      "text": "<texto_exato_do_documento>",
+      "type": "<tipo_da_lista_acima>",
+      "label": "<label_limpo_em_portugues>"
+    }}
+    ```
+
+    ### EXEMPLOS DE QUALIDADE:
+
+    **Texto**: "Paciente com diabetes mellitus tipo 2, em uso de metformina 850mg 2x/dia"
+    
+    **Saída esperada**:
+    ```json
+    [
+      {{
+        "id": "diabetes_mellitus_tipo_2",
+        "text": "diabetes mellitus tipo 2",
+        "type": "DISEASE",
+        "label": "Diabetes Mellitus Tipo 2"
+      }},
+      {{
+        "id": "metformina",
+        "text": "metformina",
+        "type": "MEDICATION",
+        "label": "Metformina"
+      }},
+      {{
+        "id": "850mg_2x_dia",
+        "text": "850mg 2x/dia",
+        "type": "DOSAGE_INFO",
+        "label": "850mg 2 vezes ao dia"
+      }}
+    ]
+    ```
+
+    **Se não encontrar entidades médicas, retorne**: `[]`
+
+    ### ANÁLISE DO TEXTO:
+
+  entity_types:
+    - name: "DISEASE"
+      description: "doenças, condições médicas, síndromes, transtornos (ex: diabetes, hipertensão, COVID-19)"
+    - name: "SYMPTOM"
+      description: "sinais, sintomas, manifestações clínicas (ex: febre, dor, tosse, dispneia)"
+    - name: "MEDICATION"
+      description: "medicamentos, fármacos, princípios ativos (ex: metformina, ibuprofeno, insulina)"
+    - name: "PROCEDURE"
+      description: "procedimentos médicos, cirurgias, exames, intervenções (ex: colonoscopia, apendicectomia)"
+    - name: "ANATOMICAL_PART"
+      description: "partes do corpo, órgãos, estruturas anatômicas (ex: coração, fígado, artéria coronária)"
+    - name: "LAB_EXAM"
+      description: "exames laboratoriais, testes diagnósticos (ex: hemograma, glicemia, PCR)"
+    - name: "LAB_RESULT"
+      description: "resultados de exames, valores laboratoriais (ex: glicose 120mg/dl, hemoglobina 12g/dl)"
+    - name: "RISK_FACTOR"
+      description: "fatores de risco para doenças (ex: tabagismo, sedentarismo, obesidade)"
+    - name: "DOSAGE_INFO"
+      description: "informações de dosagem, posologia, frequência (ex: 500mg 2x/dia, 1 comprimido pela manhã)"
+    - name: "CLINICAL_CONCEPT"
+      description: "conceitos clínicos gerais que não se encaixam nas outras categorias"
+
+  settings:
+    temperature: 0.05  # Muito baixa para máxima consistência
+    max_tokens: 2500   # Aumentado para textos maiores
+    model_fallback_order:
+      - "gpt-4o"       # Modelo mais capaz primeiro
+      - "gpt-4o-mini"
+      - "gpt-3.5-turbo" 

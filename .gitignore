@@ -1,0 +1,6 @@
+.venv
+.env
+.DS_Store
+.cognee_data
+.cognee_system
+__pycache__

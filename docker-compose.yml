@@ -1,0 +1,20 @@
+services:
+  falkodb:
+    image: falkordb/falkordb:edge
+    container_name: grafos-falkordb
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+      - "3000:3000"
+    environment:
+      # Autenticação via Redis (FalkorDB usa Redis como base)
+      # Use REDIS_ARGS com --requirepass para definir senha
+      - REDIS_ARGS=--requirepass ${FALKORDB_PASSWORD:-gabriel@123}
+      # Configurações do FalkorDB
+      - FALKORDB_ARGS=THREAD_COUNT 2 CACHE_SIZE 25
+    volumes:
+      # Persistência de dados (opcional, mas recomendado)
+      - falkordb_data:/var/lib/falkordb/data
+
+volumes:
+  falkordb_data:

@@ -1,0 +1,130 @@
+relations:
+  # 1. Estrutura documental
+  - name: CONTAINS
+    description: "Preserva a hierarquia física do texto. Navegar dentro do arquivo sem perder contexto."
+    example: "Documento → Seção / Parágrafo / Sentença"
+    category: "estrutura_documental"
+  - name: HAS_PART # Added as a more generic structural relation from previous work
+    description: "Relação genérica parte-todo, útil para estrutura documental."
+    example: "Parágrafo → Sentença"
+    category: "estrutura_documental"
+  - name: MENTIONS
+    description: "Indexar rapidamente onde um termo ou conceito clínico aparece."
+    example: "Sentença → Conceito clínico (ex: Metformina)"
+    category: "estrutura_documental"
+  - name: CITES
+    description: "Rastrear evidências, guidelines ou estudos citados."
+    example: "Documento A → Documento B"
+    category: "estrutura_documental"
+  - name: REFERENCES # Alias for CITES, as per user's table
+    description: "Rastrear evidências, guidelines ou estudos citados. (Alias de CITES)"
+    example: "Documento A → Documento B"
+    category: "estrutura_documental"
+  - name: BELONGS_TO_COLLECTION
+    description: "Filtrar por repositório ou fonte de dados."
+    example: "Documento → Fonte (Banco, Repositório, ex: PubMed)"
+    category: "estrutura_documental"
+
+  # 2. Relações semântico-clínicas
+  - name: HAS_SYMPTOM
+    description: "Captura sintoma associado a uma doença."
+    example: "COVID-19 → dispneia"
+    category: "semantico_clinica"
+  - name: CAUSED_BY
+    description: "Identifica o agente causal de uma doença ou condição."
+    example: "Úlcera péptica → H. pylori"
+    category: "semantico_clinica"
+  - name: ETIOLOGY_OF # Explicitly listed by user
+    description: "Descreve a etiologia ou causa de uma condição. Similar a CAUSED_BY."
+    example: "Doença X → Agente Y"
+    category: "semantico_clinica"
+  - name: TREATED_BY
+    description: "Indica tratamento para uma doença (medicação ou procedimento)."
+    example: "Hipertensão → losartana"
+    category: "semantico_clinica"
+  - name: MANAGED_WITH # Alias for TREATED_BY
+    description: "Indica manejo para uma doença. (Alias de TREATED_BY)"
+    example: "Diabetes → Metformina"
+    category: "semantico_clinica"
+  - name: INDICATION_FOR
+    description: "Indica para qual doença uma medicação/procedimento é usado (inverso de TREATED_BY)."
+    example: "Losartana → Hipertensão"
+    category: "semantico_clinica"
+  - name: CONTRAINDICATED_IN
+    description: "Especifica condições onde uma medicação não deve ser usada."
+    example: "AINE → úlcera ativa"
+    category: "semantico_clinica"
+  - name: HAS_DOSAGE
+    description: "Conecta uma prescrição ou medicação à sua posologia."
+    example: "Prescrição de Metformina → Dosagem (500mg, 2x/dia)"
+    category: "semantico_clinica"
+  - name: MEASURED_BY
+    description: "Indica como um parâmetro laboratorial ou clínico é medido."
+    example: "Glicemia → exame de sangue"
+    category: "semantico_clinica"
+  - name: ABNORMAL_IN
+    description: "Indica que um resultado de exame é anormal em uma determinada doença."
+    example: "HbA1c > 6,5% → diabetes"
+    category: "semantico_clinica"
+  - name: LOCATED_IN
+    description: "Especifica a localização anatômica de um sinal, sintoma ou lesão."
+    example: "Lesão → membro inferior"
+    category: "semantico_clinica"
+  - name: HAS_RISK_FACTOR
+    description: "Identifica um fator de risco para uma doença."
+    example: "IAM → tabagismo"
+    category: "semantico_clinica"
+  - name: PROGRESSES_TO
+    description: "Descreve a progressão de um estágio de doença para outro, ou para uma complicação."
+    example: "Estágio I de Câncer → Estágio II de Câncer"
+    category: "semantico_clinica"
+
+  # 3. Proveniência e evidência
+  - name: AUTHORED_BY
+    description: "Rastrear responsabilidade clínica ou autoria de um documento."
+    example: "Documento → Autor (ex: Dr. Silva)"
+    category: "proveniencia_evidencia"
+  - name: PUBLISHED_IN
+    description: "Indica o periódico, órgão ou local de publicação de um documento."
+    example: "Artigo Científico → Periódico Médico XYZ"
+    category: "proveniencia_evidencia"
+  - name: HAS_LEVEL_OF_EVIDENCE
+    description: "Associa um guideline ou estudo ao seu nível de evidência."
+    example: "Guideline de Hipertensão → Nível de Evidência A"
+    category: "proveniencia_evidencia"
+  - name: DERIVED_FROM
+    description: "Garantir traçabilidade no pipeline RAG, conectando resumos ou chunks à fonte primária."
+    example: "Resumo do Artigo → Artigo Científico Completo"
+    category: "proveniencia_evidencia"
+  - name: VERSION_OF
+    description: "Controlar atualizações de protocolos ou documentos."
+    example: "Protocolo Clínico v2.0 → Protocolo Clínico v1.0"
+    category: "proveniencia_evidencia"
+
+  # 4. Ontologia e alinhamento terminológico
+  - name: IS_A
+    description: "Relação de generalização/especialização (subclasse de)."
+    example: "Metformina → biguanida"
+    category: "ontologia_alinhamento"
+  - name: SUBCLASS_OF # Alias for IS_A
+    description: "Relação de generalização/especialização. (Alias de IS_A)"
+    example: "Cachorro → Canídeo"
+    category: "ontologia_alinhamento"
+  - name: PART_OF_ANATOMICAL # Specific PART_OF for anatomy
+    description: "Relação parte-todo para estruturas anatômicas."
+    example: "Átrio esquerdo → coração"
+    category: "ontologia_alinhamento"
+  - name: SAME_AS
+    description: "Mapeia um conceito para um código em um sistema de terminologia padrão ou sinônimo."
+    example: "Insuficiência Cardíaca → Código UMLS C0018801"
+    category: "ontologia_alinhamento"
+  - name: MAPS_TO # Alias for SAME_AS
+    description: "Mapeia um conceito para um código. (Alias de SAME_AS)"
+    example: "Febre → SNOMED CT 386661006"
+    category: "ontologia_alinhamento"
+
+  # Generic (already in use)
+  - name: RELATED_TO
+    description: "Relação semântica genérica baseada em similaridade de embeddings ou outro critério não específico."
+    example: "Chunk A → Chunk B (alta similaridade textual)"
+    category: "generica" 
