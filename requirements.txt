@@ -6,3 +6,5 @@ pandas>=2.2.0
 cognee>=0.5.1
 cognee-community-hybrid-adapter-falkor>=0.2.0
 redis>=5.0.0
+protego>=0.1
+playwright>=1.9.0

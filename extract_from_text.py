@@ -26,7 +26,3 @@ def load_env_file(env_path: str | Path = ".env") -> None:
         print(f"[env] Não foi possível carregar .env: {exc}")
 
 
-load_env_file()
-
-print(os.getenv("FALKORDB_PASSWORD"))
-

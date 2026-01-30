@@ -3,11 +3,13 @@ import os
 import pathlib
 from os import path
 from cognee import config, prune, add, cognify, search, SearchType
-from extract_from_text import load_env_file
 
-load_env_file()
-# Import the register module to enable FalkorDB support
+#Import the register module to enable FalkorDB support
 import cognee_community_hybrid_adapter_falkor.register
+
+from extract_from_text import load_env_file
+# Carrega o .env antes de importar o Cognee
+load_env_file(pathlib.Path(__file__).parent / ".env")
 
 async def main():
     # Set up local directories
@@ -25,14 +27,14 @@ async def main():
     "llm_provider": os.getenv("OPENAI_PROVIDER"),
     "llm_model": os.getenv("OPENAI_MODEL"),
     "llm_temperature": 0.7
-})
+    })
     
     # Configure FalkorDB as both vector and graph database
     config.set_vector_db_config({
         "vector_db_provider": "falkor",
         "vector_db_url": os.getenv("GRAPH_DB_URL"),
         "vector_db_port": int(os.getenv("GRAPH_DB_PORT")),
-        "vector_db_name": "cognee_graph",
+        "vector_db_name": "demo",
         "vector_dataset_database_handler": "falkor_vector_local",
         "vector_db_key": os.getenv("FALKORDB_PASSWORD"),
     })
@@ -40,33 +42,31 @@ async def main():
         "graph_database_provider": "falkor",
         "graph_database_url": os.getenv("GRAPH_DB_URL"),
         "graph_database_port": int(os.getenv("GRAPH_DB_PORT")),
-        "graph_database_name": "cognee_graph",
+        "graph_database_name": "demo",
         "graph_dataset_database_handler": "falkor_graph_local",
         "graph_database_password": os.getenv("GRAPH_DATABASE_PASSWORD"),
     })
     
-    # Optional: Clean previous data
-    await prune.prune_data()
-    await prune.prune_system()
+    # Optional: Use se quiser limpar os dados anteriores do banco de dados
+    # await prune.prune_data()
+    # await prune.prune_system()
     
     # Add and process your content
-    text_data = """
-    Sarah is a software engineer at TechCorp. She specializes in machine learning
-    and has been working on implementing graph-based recommendation systems.
-    Sarah recently collaborated with Mike on a new project using FalkorDB.
-    Mike is the lead data scientist at TechCorp.
-    """
+    for file in os.listdir(system_path / "Artigos"):
+        text_data = (system_path / "Artigos" / file).read_text(encoding="utf-8")
+        await add(text_data)
     
-    await add(text_data)
     await cognify()
     
-    # # Search using graph completion
-    # search_results = await search(
-    #     query_type=SearchType.GRAPH_COMPLETION,
-    #     query_text="What does Sarah work on?"
-    # )
+    # # Natural language Q&A using full graph context and LLM reasoning.
+    # # Best for: Complex questions, analysis, summaries, insights.
+    # # Returns: Conversational AI responses with graph-backed context.
+    search_results = await search(
+        query_type=SearchType.GRAPH_COMPLETION,
+        query_text="Quais conexões principais o grafo constrói entre higiene do sono, saúde cardiovascular e saúde mental?"
+    )
     
-    # print("Search Results:")
+    # print("Search Results GRAPH_COMPLETION:")
     # for result in search_results:
     #     print("\n" + result)
 
